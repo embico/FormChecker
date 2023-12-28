@@ -1,7 +1,7 @@
 # reminder - install packages by:
 # view->command pallete -> Terminal: Create New Terminal
-# in new terminal run: python3 -m pip install <lib>
-# before commiting run: python3 -m  pipreqs.pipreqs .
+# in new terminal run: pip install <lib>
+# before commiting run: pip freeze > requirements.txt
 
 import image_processor
 

@@ -4,6 +4,9 @@ import cv2
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
+import os
+import pandas as pd
+import tensorflow as tf
 
 
 print("start of image_processor")
@@ -141,7 +144,22 @@ class Processor:
 
 
     def MPFrame(self, frame):
-        model_path = 'efficientdet_lite0.tflite'
+        #model_path = 'efficientdet_lite0.tflite'
+        model_path = 'detect.tflite'
+
+        # Get the full absolute path to the model file
+        absolute_model_path = os.path.abspath(model_path)
+
+        # Check if the file exists
+        if os.path.exists(absolute_model_path):
+            # Try to open the file to see if there are any issues
+            try:
+                with open(absolute_model_path, 'rb') as file:
+                    print(f"File '{absolute_model_path}' successfully opened.")
+            except Exception as e:
+                print(f"Error opening the file: {e}")
+        else:
+            print(f"File '{absolute_model_path}' does not exist.")
 
         BaseOptions = mp.tasks.BaseOptions
         ObjectDetectorOptions = mp.tasks.vision.ObjectDetectorOptions
@@ -173,12 +191,45 @@ class Processor:
                     break
             output = frame.copy()
             self.poseAnalysis(output)
+            #output = self.MPFrame(frame)
             cv2.imshow('Video', output)
 
             if cv2.waitKey(20) & 0xFF==ord('d'):
                 break
 
         self.capture.release()
+        cv2.destroyAllWindows()
+    def load_model(self, model_path):
+        # Load your TFLite model
+        interpreter = tf.lite.Interpreter(model_path=model_path)
+        interpreter.allocate_tensors()
+        return interpreter
+
+    def process_frame(interpreter, frame, detection_threshold=0.5):
+        results = get_bounding_boxes(interpreter, detection_threshold)
+        return results
+
+    def tfRead(self):
+        model_path = 'detect.tflite'
+        interpreter = self.load_model(model_path)
+        while cap.isOpened():
+            ret, frame = cap.read()
+
+            if not ret:
+                break
+
+            # Perform analysis on each frame
+            results = process_frame(interpreter, frame)
+
+            # Visualize the results on the frame
+            # ...
+            # Display the frame
+            cv2.imshow('Video Analysis', frame)
+
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        cap.release()
         cv2.destroyAllWindows()
 
     def visualize(
